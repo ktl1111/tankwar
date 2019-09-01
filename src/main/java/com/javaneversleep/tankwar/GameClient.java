@@ -14,6 +14,8 @@ public class GameClient extends JComponent {
 
     private Tank playerTank;
 
+    private List<Tank>
+
     private GameClient() {
         this.playerTank = new Tank(400,100, Direction.DOWN);
 
