@@ -1,6 +1,5 @@
 package com.javaneversleep.tankwar;
 
-
 import com.apple.eawt.Application;
 
 import javax.imageio.ImageIO;
@@ -80,6 +79,7 @@ public class GameClient extends JComponent {
         }
 
     public static void main(String[] args) throws IOException {
+        com.sun.javafx.application.PlatformImpl.startup(()->{}); //for Toolkit initialized
         JFrame frame = new JFrame();
         frame.setTitle("TANK WAR!");
 
@@ -87,7 +87,7 @@ public class GameClient extends JComponent {
         Image image =  ImageIO.read(imageFile);
         Application.getApplication().setDockIconImage(image);
 
-        //frame.setIconImage(new ImageIcon("assets/images/icon.png").getImage());
+        //frame.setIconImage(new ImageIcon("assets/images/icon.png").getImage()); --windows
 
         final GameClient client = GameClient.getInstance();
         frame.add(client);
