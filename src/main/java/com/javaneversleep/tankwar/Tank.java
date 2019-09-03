@@ -17,6 +17,29 @@ class Tank {
 
     private boolean enemy;
 
+    private boolean live = true;
+
+    private int hp = 100;
+
+    int getHp() {
+        return hp;
+    }
+
+    void setHp(int hp) {
+        this.hp = hp;
+    }
+
+    boolean isLive() {
+        return live;
+    }
+
+    void setLive(boolean live) {
+        this.live = live;
+    }
+
+    boolean isEnemy() {
+        return enemy;
+    }
 
     private Direction direction;
 
@@ -72,7 +95,7 @@ class Tank {
         g.drawImage(this.getImage(), this.x, this.y, null);
     }
 
-    private Rectangle getRectangle(){
+    Rectangle getRectangle(){
         return new Rectangle(x, y, getImage().getWidth(null), getImage().getHeight(null));
     }
 
