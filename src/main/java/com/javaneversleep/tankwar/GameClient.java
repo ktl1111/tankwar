@@ -28,6 +28,12 @@ public class GameClient extends JComponent {
 
     private List<Wall> walls;
 
+    private List<Missile> missiles;
+
+    List<Missile> getMissiles() {
+        return missiles;
+    }
+
     List<Tank> getEnemyTanks() {
         return enemyTanks;
     }
@@ -39,6 +45,7 @@ public class GameClient extends JComponent {
     private GameClient() {
         this.playerTank = new Tank(400,100, Direction.DOWN);
         this.enemyTanks = new ArrayList<>(12);
+        this.missiles = new ArrayList<>(12);
         this.walls = Arrays.asList(
                 new Wall(280, 140, true, 12),
                 new Wall(280, 540, true, 12),
@@ -66,7 +73,11 @@ public class GameClient extends JComponent {
         for(Wall wall: walls) {
             wall.draw(g);
         }
-    }
+
+        for (Missile missile : missiles) {
+           missile.draw(g);
+            }
+        }
 
     public static void main(String[] args) throws IOException {
         JFrame frame = new JFrame();
@@ -78,7 +89,7 @@ public class GameClient extends JComponent {
 
         //frame.setIconImage(new ImageIcon("assets/images/icon.png").getImage());
 
-        final GameClient client = new GameClient();
+        final GameClient client = GameClient.getInstance();
         frame.add(client);
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         frame.pack();
