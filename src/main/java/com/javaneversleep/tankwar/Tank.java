@@ -1,10 +1,7 @@
 package com.javaneversleep.tankwar;
-import javafx.scene.media.Media;
-import javafx.scene.media.MediaPlayer;
 
 import java.awt.*;
 import java.awt.event.KeyEvent;
-import java.io.File;
 import java.util.Random;
 
 class Tank {
@@ -118,7 +115,7 @@ class Tank {
                 y + getImage().getHeight(null)/2 -6 , enemy, direction);
         GameClient.getInstance().getMissiles().add(missile);
 
-        playAudio("shoot.wav");
+        Tools.playAudio("shoot.wav");
     }
 
     private void superFire() {
@@ -129,13 +126,7 @@ class Tank {
         }
 
         String audioFile = new Random().nextBoolean() ? "supershoot.aiff" : "supershoot.wav";
-        playAudio(audioFile);
-    }
-
-    private void playAudio(String fileName) {
-        Media sound = new Media(new File("assets/audios/" + fileName).toURI().toString());
-        MediaPlayer mediaPlayer = new MediaPlayer(sound);
-        mediaPlayer.play();
+        Tools.playAudio(audioFile);
     }
 
     private boolean stopped;

@@ -29,6 +29,12 @@ public class GameClient extends JComponent {
 
     private List<Missile> missiles;
 
+    private List<Explosion> explosions;
+
+    void addExplosion(Explosion explosion) {
+        explosions.add(explosion);
+    }
+
     synchronized void add(Missile missile) {
         missiles.add(missile);
     }
@@ -52,8 +58,8 @@ public class GameClient extends JComponent {
 
     private GameClient() {
         this.playerTank = new Tank(400,100, Direction.DOWN);
-
-        this.missiles = new ArrayList<>(12);
+        this.missiles = new ArrayList<>();
+        this.explosions = new ArrayList<>();
         this.walls = Arrays.asList(
                 new Wall(280, 140, true, 12),
                 new Wall(280, 540, true, 12),
@@ -94,8 +100,13 @@ public class GameClient extends JComponent {
         missiles.removeIf(m -> !m.isLive());
         for (Missile missile : missiles) {
            missile.draw(g);
-            }
         }
+
+        explosions.removeIf(e -> !e.isLive());
+        for (Explosion explosion : explosions) {
+            explosion.draw(g);
+        }
+    }
 
     public static void main(String[] args) throws IOException {
         com.sun.javafx.application.PlatformImpl.startup(()->{}); //for Toolkit initialized
