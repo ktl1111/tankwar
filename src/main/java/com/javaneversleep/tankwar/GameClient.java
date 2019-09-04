@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class GameClient extends JComponent {
 
@@ -25,6 +26,8 @@ public class GameClient extends JComponent {
     private Tank playerTank;
 
     private List<Tank> enemyTanks;
+
+    private final AtomicInteger enemyKilled = new AtomicInteger(0);
 
     private List<Wall> walls;
 
@@ -62,8 +65,8 @@ public class GameClient extends JComponent {
         this.missiles = new CopyOnWriteArrayList<>();
         this.explosions = new ArrayList<>();
         this.walls = Arrays.asList(
-                new Wall(280, 140, true, 12),
-                new Wall(280, 540, true, 12),
+                new Wall(200, 140, true, 15),
+                new Wall(200, 540, true, 15),
                 new Wall(100, 160, false, 12),
                 new Wall(700, 160, false, 12)
         );
@@ -92,12 +95,21 @@ public class GameClient extends JComponent {
             g.drawString("PRESS F2 TO RESTART", 60, 360);
             g.setFont(new Font(null, Font.BOLD, 20));
             g.drawString ("(Fn+F2 on mac)", 60, 400);
-
-
         } else {
+            g.setColor(Color.WHITE);
+            g.setFont(new Font(null, Font.BOLD, 16));
+            g.drawString("Missiles: " + missiles.size(), 10, 50);
+            g.drawString("Explosions: " + explosions.size(), 10, 70);
+            g.drawString("Player Tank HP: " + playerTank.getHp(), 10, 90);
+            g.drawString("Enemy Left: " + enemyTanks.size(), 10, 110);
+            g.drawString("Enemy Killed: " + enemyKilled.get(), 10, 130);
+
             playerTank.draw(g);
 
+            int count = enemyTanks.size();
             enemyTanks.removeIf(t -> !t.isLive());
+            enemyKilled.addAndGet(count - enemyTanks.size());
+
             if(enemyTanks.isEmpty()) {
                 this.initEnemyTanks();
             }
@@ -154,18 +166,17 @@ public class GameClient extends JComponent {
 
         //noinspection InfiniteLoopStatement
         while (true) {
-            client.repaint();
-            if (client.playerTank.isLive()){
-                for (Tank tank : client.enemyTanks) {
-                    tank.actRandomly();
-                }
-            }
             try {
+                client.repaint();
+                if (client.playerTank.isLive()) {
+                    for (Tank tank : client.enemyTanks) {
+                        tank.actRandomly();
+                    }
+                }
                 Thread.sleep(50);
-            } catch (InterruptedException e){
+            }  catch (Exception e) {
                 e.printStackTrace();
             }
-
         }
     }
 
