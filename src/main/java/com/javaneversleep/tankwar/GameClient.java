@@ -1,23 +1,34 @@
 package com.javaneversleep.tankwar;
 
+import com.alibaba.fastjson.JSON;
 import com.apple.eawt.Application;
+import org.apache.commons.io.FileUtils;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.io.File;
-import java.io.IOException;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 public class GameClient extends JComponent {
 
+    static final int WIDTH = 800, HEIGHT = 600;
+
+
     private static final GameClient INSTANCE = new GameClient();
+
+    public static final String GAME_SAVE = "game.sav";
 
     static GameClient getInstance(){
         return INSTANCE;
@@ -34,6 +45,12 @@ public class GameClient extends JComponent {
     private List<Missile> missiles;
 
     private List<Explosion> explosions;
+
+    private Blood blood;
+
+    Blood getBlood() {
+        return blood;
+    }
 
     void addExplosion(Explosion explosion) {
         explosions.add(explosion);
@@ -62,17 +79,19 @@ public class GameClient extends JComponent {
 
     private GameClient() {
         this.playerTank = new Tank(400,100, Direction.DOWN);
-        this.missiles = new CopyOnWriteArrayList<>();
+        this.missiles = new CopyOnWriteArrayList<>(); //to avoid thread-safety issue
         this.explosions = new ArrayList<>();
+        this.blood = new Blood(400,250);
         this.walls = Arrays.asList(
-                new Wall(200, 140, true, 15),
-                new Wall(200, 540, true, 15),
+                new Wall(280, 140, true, 12),
+                new Wall(280, 540, true, 12),
                 new Wall(100, 160, false, 12),
                 new Wall(700, 160, false, 12)
         );
         this.initEnemyTanks();
-        this.setPreferredSize(new Dimension(800,600));
+        this.setPreferredSize(new Dimension(WIDTH, HEIGHT));
     }
+
 
     private void initEnemyTanks() {
         this.enemyTanks = new CopyOnWriteArrayList<>();;
@@ -83,10 +102,12 @@ public class GameClient extends JComponent {
         }
     }
 
+    private final static Random RANDOM = new Random();
+
     @Override
     protected void paintComponent(Graphics g) {
         g.setColor(Color.BLACK);
-        g.fillRect(0, 0, 800, 600);
+        g.fillRect(0, 0, WIDTH, HEIGHT);
         if (!playerTank.isLive()) {
             g.setColor(Color.RED);
             g.setFont(new Font(null, Font.BOLD, 100));
@@ -107,6 +128,12 @@ public class GameClient extends JComponent {
             g.drawImage(Tools.getImage("tree.png"), 10, 500, null);
 
             playerTank.draw(g);
+            if (playerTank.isDying() && RANDOM.nextInt(3) == 2){
+                blood.setLive(true);
+            }
+            if (blood.isLive()) {
+                blood.draw(g);
+            }
 
             int count = enemyTanks.size();
             enemyTanks.removeIf(t -> !t.isLive());
@@ -147,6 +174,19 @@ public class GameClient extends JComponent {
 
         final GameClient client = GameClient.getInstance();
         frame.add(client);
+        frame.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                try {
+                    client.save();
+                    System.exit(0);
+                } catch (IOException ex) {
+                    JOptionPane.showMessageDialog(null, "Failed to save current game.",
+                            "Oops! Error Occurred", JOptionPane.ERROR_MESSAGE);
+                    System.exit(4);
+                }
+            }
+        });
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         frame.pack();
         frame.addKeyListener(new KeyAdapter() {
@@ -166,6 +206,12 @@ public class GameClient extends JComponent {
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
 
+        try {
+            client.load();
+        } catch (IOException e) {
+            JOptionPane.showMessageDialog(null, "Failed to load previous game.",
+                    "Oops! Error Occurred", JOptionPane.ERROR_MESSAGE);
+        }
         //noinspection InfiniteLoopStatement
         while (true) {
             try {
@@ -180,6 +226,42 @@ public class GameClient extends JComponent {
                 e.printStackTrace();
             }
         }
+    }
+
+    private void load() throws IOException {
+        File file = new File(GAME_SAVE);
+        if (file.exists() && file.isFile()) {
+            String json = FileUtils.readFileToString(file, StandardCharsets.UTF_8);
+            Save save = JSON.parseObject(json, Save.class);
+            if (save.isGameContinued()) {
+                this.playerTank = new Tank(save.getPlayerPosition(), false);
+
+                this.enemyTanks.clear();
+                List<Save.Position> enemyPositions = save.getEnemyPositions();
+                if (enemyPositions != null && !enemyPositions.isEmpty()){
+                    for(Save.Position position : enemyPositions){
+                        this.enemyTanks.add(new Tank(position, true));
+                    }
+
+                }
+            }
+        }
+    }
+
+    void save(String destination) throws IOException {
+
+        Save save = new Save(playerTank.isLive(), playerTank.getPosition(),
+                enemyTanks.stream().filter(Tank::isLive)
+                        .map(Tank::getPosition).collect(Collectors.toList()));
+        FileUtils.write(new File(destination), JSON.toJSONString(save, true), StandardCharsets.UTF_8);
+
+//        try (PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(destination)))) {
+//            out.println(JSON.toJSONString(save, true));
+//        }
+    }
+
+    void save() throws IOException {
+        this.save(GAME_SAVE);
     }
 
     void restart() {

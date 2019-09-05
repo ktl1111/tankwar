@@ -1,10 +1,16 @@
 package com.javaneversleep.tankwar;
 
+import com.javaneversleep.tankwar.Save.Position;
+
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.util.Random;
 
 class Tank {
+
+    Position getPosition(){
+       return new Position(x, y, direction);
+    }
 
     private static final int MOVE_SPEED = 5;
 
@@ -16,7 +22,9 @@ class Tank {
 
     private boolean live = true;
 
-    private int hp = 100;
+    private static final int MAX_HP = 100;
+
+    private int hp = MAX_HP;
 
     int getHp() {
         return hp;
@@ -44,6 +52,10 @@ class Tank {
         this(x, y, false, direction);
     }
 
+    Tank(Position position, boolean enemy) {
+        this(position.getX(), position.getY(), enemy, position.getDirection());
+    }
+
     Tank(int x, int y, boolean enemy, Direction direction) {
         this.x = x;
         this.y = y;
@@ -62,6 +74,10 @@ class Tank {
         return direction.getImage(prefix + "tank");
     }
 
+    boolean isDying() {
+        return this.hp <= MAX_HP * 0.2;
+    }
+
     void draw(Graphics g) {
         int oldX = x, oldY = y;
         if (!this.enemy) {
@@ -69,10 +85,16 @@ class Tank {
         }
         this.move();
 
-        if (x < 0) x = 0;
-        else if (x > 800 - getImage().getWidth(null)) x = 800 - getImage().getWidth(null);
-        if (y < 0) y = 0;
-        else if(y > 600 - getImage().getHeight(null)) y = 600 - getImage().getHeight(null);
+        if (x < 0) {
+            x = 0;
+        } else if (x > GameClient.WIDTH - getImage().getWidth(null)) {
+            x = GameClient.WIDTH - getImage().getWidth(null);
+        }
+        if (y < 0) {
+            y = 0;
+        } else if(y > GameClient.HEIGHT - getImage().getHeight(null)) {
+            y = GameClient.HEIGHT - getImage().getHeight(null);
+        }
 
         Rectangle rec = this.getRectangle();
         for (Wall wall : GameClient.getInstance().getWalls()){
@@ -91,25 +113,48 @@ class Tank {
             }
         }
 
-        if (this.enemy && rec.intersects(GameClient.getInstance()
-                .getPlayerTank().getRectangle())) {
+        if (this.enemy && rec.intersects(GameClient.getInstance().getPlayerTank().getRectangle())) {
             x = oldX;
             y = oldY;
         }
 
         if(!enemy) {
+            Blood blood = GameClient.getInstance().getBlood();
+            if (blood.isLive() && rec.intersects(blood.getRectangle())) {
+                this.hp = MAX_HP;
+                Tools.playAudio("revive.wav");
+                blood.setLive(false);
+            }
+
             g.setColor(Color.WHITE);
             g.fillRect(x, y - 10, this.getImage().getWidth(null), 10);
 
             g.setColor(Color.RED);
-            int width = hp * this.getImage().getWidth(null) / 100;
+            int width = hp * this.getImage().getWidth(null) / MAX_HP;
             g.fillRect(x, y - 10, width, 10);
+
+            Image petImage = Tools.getImage("pet-camel.gif");
+            g.drawImage(petImage, this.x - petImage.getWidth(null) - DISTANCE_TO_PET, this.y, null);
         }
         g.drawImage(this.getImage(), this.x, this.y, null);
     }
 
+    private static final int DISTANCE_TO_PET = 4;
+
     Rectangle getRectangle(){
+        if (enemy) {
+            return new Rectangle(x, y, getImage().getWidth(null), getImage().getHeight(null));
+        } else {
+            Image petImage = Tools.getImage("pet-camel.gif");
+            int delta = petImage.getWidth(null) + DISTANCE_TO_PET;
+            return new Rectangle(x - delta, y,
+                    getImage().getWidth(null) + delta, getImage().getHeight(null));
+        }
+    }
+
+    Rectangle getRectangleForHitDetection(){
         return new Rectangle(x, y, getImage().getWidth(null), getImage().getHeight(null));
+
     }
 
     private boolean up, down, left, right;
