@@ -1,6 +1,7 @@
 package com.javaneversleep.tankwar;
 
 import com.javaneversleep.tankwar.Save.Position;
+import com.sun.webkit.dom.HTMLDirectoryElementImpl;
 
 import java.awt.*;
 import java.awt.event.KeyEvent;
@@ -161,10 +162,10 @@ class Tank {
 
     void keyPressed(KeyEvent e) {
         switch (e.getKeyCode()) {
-            case KeyEvent.VK_UP: up = true; break;
-            case KeyEvent.VK_DOWN: down = true; break;
-            case KeyEvent.VK_LEFT: left = true; break;
-            case KeyEvent.VK_RIGHT: right = true; break;
+            case KeyEvent.VK_UP: code |= Direction.UP.code; break;
+            case KeyEvent.VK_DOWN: code |= Direction.DOWN.code; break;
+            case KeyEvent.VK_LEFT: code |= Direction.LEFT.code; break;
+            case KeyEvent.VK_RIGHT: code |= Direction.RIGHT.code; break;
             case KeyEvent.VK_CONTROL: fire(); break;
             case KeyEvent.VK_A: superFire(); break;
             case KeyEvent.VK_F2: GameClient.getInstance().restart(); break;
@@ -193,30 +194,24 @@ class Tank {
 
     private boolean stopped;
 
+    private int code;
+
     private void determineDirection(){
-        if (!up && !left && !down && !right) {
+        Direction newDirection = Direction.get(code);
+        if (newDirection == null) {
             this.stopped = true;
         } else {
-            if (up && left && !down && !right) this.direction = Direction.LEFT_UP;
-            else if (up && right && !down && !left) this.direction = Direction.RIGHT_UP;
-            else if (up && !left && !down && !right) this.direction = Direction.UP;
-            else if (down && !left && !up && !right) this.direction = Direction.DOWN;
-            else if (down && left && !up && !right) this.direction = Direction.LEFT_DOWN;
-            else if (down && right && !up && !left) this.direction = Direction.RIGHT_DOWN;
-            else if (left && !down && !up && !right) this.direction = Direction.LEFT;
-            else if (right && !left && !up && !down) this.direction = Direction.RIGHT;
-
+            this.direction = newDirection;
             this.stopped = false;
         }
-
     }
 
     void keyReleased(KeyEvent e) {
         switch (e.getKeyCode()) {
-            case KeyEvent.VK_UP: up = false; break;
-            case KeyEvent.VK_DOWN: down = false; break;
-            case KeyEvent.VK_LEFT: left = false; break;
-            case KeyEvent.VK_RIGHT: right = false; break;
+            case KeyEvent.VK_UP: code ^= Direction.UP.code; break;
+            case KeyEvent.VK_DOWN: code ^= Direction.DOWN.code; break;
+            case KeyEvent.VK_LEFT: code ^= Direction.LEFT.code; break;
+            case KeyEvent.VK_RIGHT: code ^= Direction.RIGHT.code; break;
         }
 
 
